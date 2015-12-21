@@ -37,13 +37,19 @@ class ViewController: UIViewController {
         
         // encryption & decryption
         let theSecret = "foobar"
+        
+        
+        // uncomment for CommonCrypto mega fail
+//        let theSecret = "AAAAAAAAA"
         let theSalt = randomDataWithLength(32)
         let theHash = generateHashFromString("foobar")
         let theKey = keyFromPassword(theHash, inSalt: theSalt)
         print(theHash)
         print(theSalt)
         print(theKey)
-        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theKey, inIV: randomDataWithLength(kCCBlockSizeAES128))
+        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inIV: randomDataWithLength(kCCBlockSizeAES128))
+        // uncomment for CommonCrypto mega fail
+//        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inIV: randomDataWithLength(kCCBlockSizeAES128))
         print((theCipherText))
         let theClearData = decryptData(theCipherText!, inKey: theKey)!
         let theClearText = NSString(data: theClearData, encoding: NSUTF8StringEncoding)
