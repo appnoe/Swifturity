@@ -34,11 +34,12 @@ class ViewController: UIViewController {
         }
         
         // encryption & decryption
+        let thePassword = "foobar"
         let theSecret = "Lorem Ipsum Alaaf und Helau."
         // uncomment for CommonCrypto mega fail
 //        let theSecret = "AAAAAAAAA"
         let theSalt = randomDataWithLength(32)
-        let theHash = generateHashFromString("foobar")
+        let theHash = generateHashFromString(thePassword)
         let theKey = keyFromPassword(theHash, inSalt: theSalt)
         print(theHash)
         print(theSalt)
@@ -50,6 +51,12 @@ class ViewController: UIViewController {
         let theClearData = decryptData(theCipherText!, inKey: theKey)!
         let theClearText = NSString(data: theClearData, encoding: NSUTF8StringEncoding)
         print(theClearText)
+        
+        storeSecretInKeychain(thePassword.dataUsingEncoding(NSUTF8StringEncoding)!, inAccount: "MyAccount", inLabel: "MyLabel", inService: "MyService")
+        let theRestoredSecret = secretFromKeychain("MyAccount")!
+        print(NSString(data: theRestoredSecret, encoding: NSUTF8StringEncoding))
+        
+        
     }
     
     func generateHashFromString(inString : String) -> String {
@@ -139,63 +146,65 @@ class ViewController: UIViewController {
         }
     }
     
-//    +(OSStatus)storeSecretInKeychain:(NSData *)inSecret
-//    account:(NSString *)inAccount
-//    service:(NSString *)inService
-//    label:(NSString * )inLabel
-//    accessGroup:(NSString *)inAccessGroup
-//    protectionClass:(CFTypeRef)inProtectionClass{
-//    NSMutableDictionary *theSearchDict = [NSMutableDictionary dictionary];
-//    [theSearchDict setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
-//    [theSearchDict setObject:inService forKey:(__bridge id)kSecAttrService];
-//    [theSearchDict setObject:inLabel forKey:(__bridge id)kSecAttrLabel];
-//    [theSearchDict setObject:inAccount forKey:(__bridge id)kSecAttrAccount];
-//    
-//    NSMutableDictionary *theWriteDict = [NSMutableDictionary dictionary];
-//    [theWriteDict setDictionary:theSearchDict];
-//    CFTypeRef theProtectionClass = inProtectionClass ? inProtectionClass : kSecDefaultProtectionClass;
-//    [theWriteDict setObject:(__bridge id)theProtectionClass forKey:(__bridge id)kSecAttrAccessible];
-//    [theWriteDict setObject:inSecret forKey:(__bridge id)kSecValueData];
-//    if(inAccessGroup != nil)
-//    [theWriteDict setObject:inAccessGroup forKey:(__bridge id)kSecAttrAccessGroup];
-//    
-//    NSMutableDictionary *theUpdateDict = [NSMutableDictionary dictionary];
-//    [theUpdateDict setObject:inSecret forKey:(__bridge id)kSecValueData];
-//    
-//    OSStatus theStatus;
-//    
-//    if((theStatus = SecItemAdd((__bridge CFDictionaryRef)theWriteDict, NULL)) == errSecDuplicateItem){
-//    theStatus =  SecItemUpdate((__bridge CFDictionaryRef)theSearchDict, ((__bridge CFDictionaryRef)theUpdateDict));
-//    }
-//    NSLog(@"Keychain status: %ld", (long)theStatus);
-//    return theStatus;
-//    }
-//    
-//    +(NSData *)secretFromKeychainForAccount:(NSString *)inAccount
-//    service:(NSString *)inService
-//    withLabel:(NSString * )inLabel{
-//    if(inAccount != nil){
-//    NSMutableDictionary *theQueryDict = [NSMutableDictionary dictionary];
-//    [theQueryDict setObject:(__bridge NSString *)kSecClassGenericPassword forKey:(__bridge NSString *)kSecClass];
-//    [theQueryDict setObject:inAccount forKey:(__bridge id)kSecAttrAccount];
-//    [theQueryDict setObject:inLabel forKey:(__bridge id)kSecAttrLabel];
-//    [theQueryDict setObject:inService forKey:(__bridge id)kSecAttrService];
-//    [theQueryDict setObject:(id)kCFBooleanTrue forKey:(__bridge_transfer id)kSecReturnData];
-//    
-//    CFDataRef thePWData = nil;
-//    OSStatus theStatus = SecItemCopyMatching((__bridge CFDictionaryRef)theQueryDict, (CFTypeRef*)&thePWData);
-//    NSLog(@"Keychain status: %ld", (long)theStatus);
-//    if(theStatus == errSecSuccess){
-//    NSData *result = (__bridge_transfer NSData*)thePWData;
-//    return result;
-//    } else {
-//    return nil;
-//    }
-//    } else {
-//    return nil;
-//    }
-//    }
+    func storeSecretInKeychain(inSecret : NSData, inAccount : NSString, inLabel : NSString, inService : NSString) -> OSStatus {
+        
+        //errSecSuccess                = 0       No error.
+        //errSecUnimplemented          = -4      Function or operation not implemented.
+        //errSecParam                  = -50     One or more parameters passed to a function where not valid.
+        //errSecAllocate               = -108    Failed to allocate memory.
+        //errSecNotAvailable           = -25291  No keychain is available. You may need to restart your computer.
+        //errSecDuplicateItem          = -25299  The specified item already exists in the keychain.
+        //errSecItemNotFound           = -25300  The specified item could not be found in the keychain.
+        //errSecInteractionNotAllowed  = -25308  User interaction is not allowed.
+        //errSecDecode                 = -26275  Unable to decode the provided data.
+        //errSecAuthFailed             = -25293  The user name or passphrase you entered is not correct.
+        
+        let theQueryDict = [
+            kSecClass as String             : kSecClassGenericPassword as String,
+            kSecAttrAccount as String       : inAccount
+        ]
+    
+        let theWriteDict = [
+            kSecClass as String             : kSecClassGenericPassword as String,
+            kSecAttrAccount as String       : inAccount,
+            kSecValueData as String         : inSecret,
+            kSecAttrService as String       : inService,
+            kSecAttrLabel as String         : inLabel,
+            kSecAttrAccessible as String    : kSecAttrAccessibleWhenUnlocked
+        ]
+        
+        let theUpdateDict = [
+            kSecValueData as String         : inSecret
+        ]
 
+        var theStatus = SecItemAdd(theWriteDict as CFDictionaryRef, nil)
+
+        if(theStatus == errSecDuplicateItem ){
+            print(("Duplicate found. Updating …"))
+            theStatus = SecItemUpdate(theQueryDict as CFDictionaryRef, theUpdateDict as CFDictionaryRef)
+        }
+
+        return theStatus
+    }
+    
+    func secretFromKeychain(inAccount : NSString) -> NSData? {
+        let theQueryDict = [
+            kSecClass as String             : kSecClassGenericPassword as String,
+            kSecAttrAccount as String       : inAccount,
+            kSecReturnData as String        : kCFBooleanTrue,
+            kSecMatchLimit as String        : kSecMatchLimitOne
+        ]
+        
+        var theSecret : AnyObject?
+        let theStatus = withUnsafeMutablePointer(&theSecret) { SecItemCopyMatching(theQueryDict, UnsafeMutablePointer($0)) }
+        
+        if theStatus == errSecSuccess {
+            if let data = theSecret as! NSData? {
+                return data
+            }
+        }
+        return nil
+    }
     
 }
 
