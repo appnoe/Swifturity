@@ -23,9 +23,7 @@ class ViewController: UIViewController {
         let theContentData = theContentString.dataUsingEncoding(NSUTF8StringEncoding)
         
         let theAttributes = [NSFileProtectionKey : NSFileProtectionComplete]
-        let theFileManagerResult = theFileManager.createFileAtPath(theFile, contents:theContentData, attributes:theAttributes)
-        print(theFileManagerResult)
-        
+        theFileManager.createFileAtPath(theFile, contents:theContentData, attributes:theAttributes)
         
         // Backup exclusion
         let theFileURL = NSURL.fileURLWithPath(theFile)
@@ -36,9 +34,7 @@ class ViewController: UIViewController {
         }
         
         // encryption & decryption
-        let theSecret = "foobar"
-        
-        
+        let theSecret = "Lorem Ipsum Alaaf und Helau."
         // uncomment for CommonCrypto mega fail
 //        let theSecret = "AAAAAAAAA"
         let theSalt = randomDataWithLength(32)
@@ -47,7 +43,7 @@ class ViewController: UIViewController {
         print(theHash)
         print(theSalt)
         print(theKey)
-        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inIV: randomDataWithLength(kCCBlockSizeAES128))
+        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theKey, inIV: randomDataWithLength(kCCBlockSizeAES128))
         // uncomment for CommonCrypto mega fail
 //        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inIV: randomDataWithLength(kCCBlockSizeAES128))
         print((theCipherText))
