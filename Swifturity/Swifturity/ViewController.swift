@@ -15,21 +15,21 @@ class ViewController: UIViewController {
         let theFileManager = NSFileManager.defaultManager()
         let theLocalDirectories = theFileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
         
-        let theDocumentsPath = theLocalDirectories.first?.path
-        let theFileName = "foobar.txt"
-        let theFile = theDocumentsPath! + "/" + theFileName
+        guard let theDocumentsPath = theLocalDirectories.first else { fatalError() }
+        let theFileURL = theDocumentsPath.URLByAppendingPathComponent("foobar.txt")
         
         let theContentString = "foobar"
         let theContentData = theContentString.dataUsingEncoding(NSUTF8StringEncoding)
         
         let theAttributes = [NSFileProtectionKey : NSFileProtectionComplete]
-        theFileManager.createFileAtPath(theFile, contents:theContentData, attributes:theAttributes)
+        guard let theFilePath = theFileURL.path else { fatalError() }
+        theFileManager.createFileAtPath(theFilePath, contents:theContentData, attributes:theAttributes)
         
         // Backup exclusion
-        let theFileURL = NSURL.fileURLWithPath(theFile)
         do {
             try theFileURL.setResourceValue(true, forKey: NSURLIsExcludedFromBackupKey)
         } catch {
+            print("Error: \(error)")
             print("Backup exclusion not set")
         }
         
@@ -44,15 +44,16 @@ class ViewController: UIViewController {
         print(theHash)
         print(theSalt)
         print(theKey)
-        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theKey, inIV: randomDataWithLength(kCCBlockSizeAES128))
-        // uncomment for CommonCrypto mega fail
+        guard let theSecretData = theSecret.dataUsingEncoding(NSUTF8StringEncoding) else { fatalError() }
+        guard let theCipherText = encryptData(theSecretData, inKey: theKey, inIV: randomDataWithLength(kCCBlockSizeAES128)) else { fatalError() }        // uncomment for CommonCrypto mega fail
 //        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inIV: randomDataWithLength(kCCBlockSizeAES128))
         print((theCipherText))
-        let theClearData = decryptData(theCipherText!, inKey: theKey)!
+        let theClearData = decryptData(theCipherText, inKey: theKey)!
         let theClearText = NSString(data: theClearData, encoding: NSUTF8StringEncoding)
         print(theClearText)
         
-        storeSecretInKeychain(thePassword.dataUsingEncoding(NSUTF8StringEncoding)!, inAccount: "MyAccount", inLabel: "MyLabel", inService: "MyService")
+        guard let passswordData = thePassword.dataUsingEncoding(NSUTF8StringEncoding) else { fatalError() }
+        storeSecretInKeychain(passswordData, inAccount: "MyAccount", inLabel: "MyLabel", inService: "MyService")
         let theRestoredSecret = secretFromKeychain("MyAccount")!
         print(NSString(data: theRestoredSecret, encoding: NSUTF8StringEncoding))
         
@@ -74,9 +75,9 @@ class ViewController: UIViewController {
     }
     
     func randomDataWithLength(inLength : size_t) -> NSMutableData {
-        let theData = NSMutableData(length: inLength)
-        SecRandomCopyBytes(kSecRandomDefault, inLength, UnsafeMutablePointer<UInt8>(theData!.mutableBytes))
-        return theData!
+        guard let theData = NSMutableData(length: inLength) else { fatalError() }
+        SecRandomCopyBytes(kSecRandomDefault, inLength, UnsafeMutablePointer<UInt8>(theData.mutableBytes))
+        return theData
     }
     
     func keyFromPassword(inPassword : NSString, inSalt : NSData) -> NSData {
@@ -123,7 +124,7 @@ class ViewController: UIViewController {
         var outLength : Int = 0
         let theIV = inData.subdataWithRange(NSMakeRange(inData.length-kCCBlockSizeAES128, kCCBlockSizeAES128))
         let theCipherText = inData.subdataWithRange(NSMakeRange(0, inData.length-kCCBlockSizeAES128))
-        let theClearText = NSMutableData(length: inData.length + kCCBlockSizeAES128)
+        guard let theClearText = NSMutableData(length: inData.length + kCCBlockSizeAES128) else { return nil }
         let theOperation : CCOperation = UInt32(kCCDecrypt)
         let theAlgorithm :  CCAlgorithm = UInt32(kCCAlgorithmAES128)
         let theOptions :   CCOptions = UInt32(kCCOptionPKCS7Padding)
@@ -135,12 +136,12 @@ class ViewController: UIViewController {
                                                     UnsafePointer<UInt8>(theIV.bytes),
                                                     UnsafePointer<UInt8>(theCipherText.bytes),
                                                     size_t(theCipherText.length),
-                                                    UnsafeMutablePointer<Void>(theClearText!.mutableBytes),
-                                                    size_t(theClearText!.length),
+                                                    UnsafeMutablePointer<Void>(theClearText.mutableBytes),
+                                                    size_t(theClearText.length),
                                                     &outLength)
         if(theCCResult == 0){
-            theClearText?.length = outLength
-            return NSData(data: theClearText!)
+            theClearText.length = outLength
+            return NSData(data: theClearText)
         } else {
             return nil
         }
