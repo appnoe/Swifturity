@@ -82,15 +82,18 @@ class ViewController: UIViewController {
     
     func keyFromPassword(inPassword : NSString, inSalt : NSData) -> NSData {
         let theEncryptionKey : NSMutableData = NSMutableData(length: kCCBlockSizeAES128)!
+        let theStartTime = NSDate.timeIntervalSinceReferenceDate()
         CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2),
                                 inPassword.UTF8String,
                                 size_t(inPassword.length),
                                 UnsafePointer<UInt8>(inSalt.bytes),
                                 size_t(inSalt.length),
                                 CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                                uint(20000),
+                                uint(50000),
                                 UnsafeMutablePointer<UInt8>(theEncryptionKey.mutableBytes),
                                 size_t(theEncryptionKey.length));
+        let theStopTime = NSDate.timeIntervalSinceReferenceDate() - theStartTime
+        print(theStopTime)
         return theEncryptionKey
     }
     
