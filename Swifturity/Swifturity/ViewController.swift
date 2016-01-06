@@ -89,7 +89,7 @@ class ViewController: UIViewController {
                                 UnsafePointer<UInt8>(inSalt.bytes),
                                 size_t(inSalt.length),
                                 CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                                uint(50000),
+                                uint(30000),
                                 UnsafeMutablePointer<UInt8>(theEncryptionKey.mutableBytes),
                                 size_t(theEncryptionKey.length));
         let theStopTime = NSDate.timeIntervalSinceReferenceDate() - theStartTime
