@@ -8,7 +8,8 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, NSURLSessionDelegate {
+    @IBOutlet weak var urlTextField: UITextField!
     @IBAction func writeFile(sender: UIButton) {
         
         // NSFileProtection
@@ -209,6 +210,58 @@ class ViewController: UIViewController {
         }
         return nil
     }
+
+    func session() -> NSURLSession {
+        let theSessionConfiguration = NSURLSessionConfiguration.defaultSessionConfiguration()
+        theSessionConfiguration.protocolClasses?.append(KMRURLProtocol)
+//        return NSURLSession(configuration: theSessionConfiguration)
+        return NSURLSession( configuration: theSessionConfiguration,
+                                  delegate: self,
+                             delegateQueue: nil)
+    }
     
+    @IBAction func requestURL(sender: UIButton) {
+        guard let urlString = urlTextField.text else { fatalError() }
+        let theURL = NSURL(string: urlString)
+        let theURLRequest = NSURLRequest(URL: theURL!)
+        let theSession = session()
+        let task = theSession.dataTaskWithRequest(theURLRequest, completionHandler: {(data, response, error) in
+        print(response)
+        });
+        task.resume()
+    }
+    
+    func URLSession(session: NSURLSession, didReceiveChallenge challenge: NSURLAuthenticationChallenge, completionHandler: (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Void) {
+        if (challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust) {
+            repeat {
+                if let theServerTrust = challenge.protectionSpace.serverTrust {
+                    var theResult = SecTrustResultType(kSecTrustResultInvalid)
+                    if(errSecSuccess == SecTrustEvaluate(theServerTrust, &theResult)) {
+
+                        for index in 0..<SecTrustGetCertificateCount(theServerTrust) {
+                            if let theServerCertificate = SecTrustGetCertificateAtIndex(theServerTrust, index) {
+                                let theServerCertificateData = SecCertificateCopyData(theServerCertificate) as CFDataRef
+                                let theData = CFDataGetBytePtr(theServerCertificateData);
+                                let theSize = CFDataGetLength(theServerCertificateData);
+                                let theServerCert = NSData(bytes: theData, length: theSize)
+                                let theLocalCert = NSBundle.mainBundle().pathForResource("wikipedia", ofType: "der")
+                                if let file = theLocalCert {
+                                    if let theLocalCert = NSData(contentsOfFile: file) {
+                                        if theServerCert.isEqualToData(theLocalCert) {
+                                            completionHandler(NSURLSessionAuthChallengeDisposition.UseCredential, NSURLCredential(forTrust:theServerTrust))
+                                            print("Certificate valid!")
+                                            return
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } while(false)
+        }
+        completionHandler(NSURLSessionAuthChallengeDisposition.CancelAuthenticationChallenge, nil)
+        print("Certificate invalid!")
+    }
 }
 

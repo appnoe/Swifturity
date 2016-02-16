@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		408372E11C70F29F0026AD46 /* KMRURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408372E01C70F29F0026AD46 /* KMRURLProtocol.swift */; };
+		40A645F91C7279CA0079D6C1 /* wikipedia.der in Resources */ = {isa = PBXBuildFile; fileRef = 40A645F81C7279C50079D6C1 /* wikipedia.der */; };
+		40A645FA1C727DE00079D6C1 /* blog.fefe.de.der in Resources */ = {isa = PBXBuildFile; fileRef = 40A645F61C7276960079D6C1 /* blog.fefe.de.der */; };
 		40BA79571C1777E900D9B625 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40BA79561C1777E900D9B625 /* AppDelegate.swift */; };
 		40BA79591C1777E900D9B625 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40BA79581C1777E900D9B625 /* ViewController.swift */; };
 		40BA795C1C1777E900D9B625 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 40BA795A1C1777E900D9B625 /* Main.storyboard */; };
@@ -16,6 +19,9 @@
 
 /* Begin PBXFileReference section */
 		407E8E4A1C28999D00432818 /* Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Header.h; sourceTree = "<group>"; };
+		408372E01C70F29F0026AD46 /* KMRURLProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KMRURLProtocol.swift; sourceTree = "<group>"; };
+		40A645F61C7276960079D6C1 /* blog.fefe.de.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = blog.fefe.de.der; sourceTree = "<group>"; };
+		40A645F81C7279C50079D6C1 /* wikipedia.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = wikipedia.der; sourceTree = "<group>"; };
 		40BA79531C1777E900D9B625 /* Swifturity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Swifturity.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40BA79561C1777E900D9B625 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		40BA79581C1777E900D9B625 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -39,6 +45,8 @@
 		40BA794A1C1777E900D9B625 = {
 			isa = PBXGroup;
 			children = (
+				40A645F61C7276960079D6C1 /* blog.fefe.de.der */,
+				40A645F81C7279C50079D6C1 /* wikipedia.der */,
 				40BA79551C1777E900D9B625 /* Swifturity */,
 				40BA79541C1777E900D9B625 /* Products */,
 			);
@@ -57,6 +65,7 @@
 			children = (
 				40BA79561C1777E900D9B625 /* AppDelegate.swift */,
 				40BA79581C1777E900D9B625 /* ViewController.swift */,
+				408372E01C70F29F0026AD46 /* KMRURLProtocol.swift */,
 				407E8E4A1C28999D00432818 /* Header.h */,
 				40BA795A1C1777E900D9B625 /* Main.storyboard */,
 				40BA795D1C1777E900D9B625 /* Assets.xcassets */,
@@ -126,7 +135,9 @@
 			files = (
 				40BA79611C1777E900D9B625 /* LaunchScreen.storyboard in Resources */,
 				40BA795E1C1777E900D9B625 /* Assets.xcassets in Resources */,
+				40A645FA1C727DE00079D6C1 /* blog.fefe.de.der in Resources */,
 				40BA795C1C1777E900D9B625 /* Main.storyboard in Resources */,
+				40A645F91C7279CA0079D6C1 /* wikipedia.der in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,6 +149,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				40BA79591C1777E900D9B625 /* ViewController.swift in Sources */,
+				408372E11C70F29F0026AD46 /* KMRURLProtocol.swift in Sources */,
 				40BA79571C1777E900D9B625 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
