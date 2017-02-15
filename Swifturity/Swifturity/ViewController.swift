@@ -41,15 +41,15 @@ class ViewController: UIViewController, URLSessionDelegate {
 //        let theSecret = "AAAAAAAAA"
         let theSalt = randomDataWithLength(32)
         let theHash = generateHashFromString(thePassword)
-        let theKey = keyFromPassword(theHash as NSString, inSalt: theSalt as Data)
+        let theKey = keyFromPassword((theHash as NSString) as String, inSalt: theSalt as Data)
         print(theHash)
         print(theSalt)
         print(theKey)
         guard let theSecretData = theSecret.data(using: String.Encoding.utf8) else { fatalError() }
-        guard let theCipherText = encryptData(theSecretData, inKey: theKey, inIV: randomDataWithLength(kCCBlockSizeAES128) as Data) else { fatalError() }        // uncomment for CommonCrypto mega fail
+        guard let theCipherText = encryptData(theSecretData, inKey: theKey!, inIV: randomDataWithLength(kCCBlockSizeAES128) as Data) else { fatalError() }        // uncomment for CommonCrypto mega fail
 //        let theCipherText = encryptData(theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inKey: theSecret.dataUsingEncoding(NSUTF8StringEncoding)!, inIV: randomDataWithLength(kCCBlockSizeAES128))
         print((theCipherText))
-        let theClearData = decryptData(theCipherText, inKey: theKey)!
+        let theClearData = decryptData(theCipherText, inKey: theKey!)!
         let theClearText = NSString(data: theClearData, encoding: String.Encoding.utf8.rawValue)
         print(theClearText as Any)
         
@@ -75,28 +75,66 @@ class ViewController: UIViewController, URLSessionDelegate {
         return theHash
     }
     
-    func randomDataWithLength(_ inLength : size_t) -> NSMutableData {
-        guard let theData = NSMutableData(length: inLength) else { fatalError() }
-        SecRandomCopyBytes(kSecRandomDefault, inLength, UnsafeMutablePointer<UInt8>(theData.mutableBytes))
-        return theData
+    // Swift 2
+//    func randomDataWithLength(_ inLength : size_t) -> NSMutableData {
+//        guard let theData = NSMutableData(length: inLength) else { fatalError() }
+//        SecRandomCopyBytes(kSecRandomDefault, inLength, UnsafeMutablePointer<UInt8>(theData.mutableBytes))
+//        return theData
+//    }
+    
+    func randomDataWithLength(_ inLength : size_t) -> Data {
+        var keyData = Data(count: inLength)
+        _ = keyData.withUnsafeMutableBytes {
+            mutableBytes in SecRandomCopyBytes(kSecRandomDefault, keyData.count, mutableBytes)
+        }
+        return keyData
     }
     
-    func keyFromPassword(_ inPassword : NSString, inSalt : Data) -> Data {
-        let theEncryptionKey : NSMutableData = NSMutableData(length: kCCBlockSizeAES128)!
-        let theStartTime = Date.timeIntervalSinceReferenceDate
-        CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2),
-                                inPassword.utf8String,
-                                size_t(inPassword.length),
-                                (inSalt as NSData).bytes.bindMemory(to: UInt8.self, capacity: inSalt.count),
-                                size_t(inSalt.count),
-                                CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                                uint(30000),
-                                UnsafeMutablePointer<UInt8>(theEncryptionKey.mutableBytes),
-                                size_t(theEncryptionKey.length));
-        let theStopTime = Date.timeIntervalSinceReferenceDate - theStartTime
-        print(theStopTime)
-        return theEncryptionKey as Data
+    func keyFromPassword(_ inPassword: String, inSalt: Data) -> Data? {
+        let passwordData = inPassword.data(using:String.Encoding.utf8)!
+        var derivedKeyData = Data(repeating:0, count:kCCBlockSizeAES128)
+        let rounds = 30000
+        
+        let derivationStatus = derivedKeyData.withUnsafeMutableBytes {derivedKeyBytes in
+            inSalt.withUnsafeBytes { saltBytes in
+                
+                CCKeyDerivationPBKDF(
+                    CCPBKDFAlgorithm(kCCPBKDF2),
+                    inPassword,
+                    passwordData.count,
+                    saltBytes,
+                    inSalt.count,
+                    CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
+                    UInt32(rounds),
+                    derivedKeyBytes,
+                    derivedKeyData.count)
+            }
+        }
+        if (derivationStatus != 0) {
+            print("Error: \(derivationStatus)")
+            return nil
+        }
+        
+        return derivedKeyData
     }
+    
+    // Swift 2
+//    func keyFromPassword(_ inPassword : NSString, inSalt : Data) -> Data {
+//        let theEncryptionKey : NSMutableData = NSMutableData(length: kCCBlockSizeAES128)!
+//        let theStartTime = Date.timeIntervalSinceReferenceDate
+//        CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2),
+//                                inPassword.utf8String,
+//                                size_t(inPassword.length),
+//                                (inSalt as NSData).bytes.bindMemory(to: UInt8.self, capacity: inSalt.count),
+//                                size_t(inSalt.count),
+//                                CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
+//                                uint(30000),
+//                                UnsafeMutablePointer<UInt8>(theEncryptionKey.mutableBytes),
+//                                size_t(theEncryptionKey.length));
+//        let theStopTime = Date.timeIntervalSinceReferenceDate - theStartTime
+//        print(theStopTime)
+//        return theEncryptionKey as Data
+//    }
     
     func encryptData(_ inData : Data, inKey : Data, inIV : Data) -> Data? {
         let theCipherText : NSMutableData = NSMutableData(length: inData.count + kCCBlockSizeAES128)!
@@ -126,8 +164,13 @@ class ViewController: UIViewController, URLSessionDelegate {
     
     func decryptData(_ inData : Data, inKey : Data) -> Data? {
         var outLength : Int = 0
-        let theIV = inData.subdata(in: NSMakeRange(inData.count-kCCBlockSizeAES128, kCCBlockSizeAES128))
-        let theCipherText = inData.subdata(in: NSMakeRange(0, inData.count-kCCBlockSizeAES128))
+        
+        let rangeStart = inData.count-kCCBlockSizeAES128
+        let rangeEnd = rangeStart + kCCBlockSizeAES128
+        var range = Range(rangeStart..<rangeEnd)
+        let theIV = inData.subdata(in: range)
+        range =  Range(0..<rangeStart)
+        let theCipherText = inData.subdata(in: range)
         guard let theClearText = NSMutableData(length: inData.count + kCCBlockSizeAES128) else { return nil }
         let theOperation : CCOperation = UInt32(kCCDecrypt)
         let theAlgorithm :  CCAlgorithm = UInt32(kCCAlgorithmAES128)
