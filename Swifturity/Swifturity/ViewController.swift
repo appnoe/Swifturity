@@ -257,7 +257,6 @@ class ViewController: UIViewController, URLSessionDelegate {
     func session() -> Foundation.URLSession {
         let theSessionConfiguration = URLSessionConfiguration.default
         theSessionConfiguration.protocolClasses?.insert(KMRURLProtocol.self, at: 0)
-//        return NSURLSession(configuration: theSessionConfiguration)
         return Foundation.URLSession( configuration: theSessionConfiguration,
                                   delegate: self,
                              delegateQueue: nil)
@@ -269,7 +268,6 @@ class ViewController: UIViewController, URLSessionDelegate {
         let theURLRequest = URLRequest(url: theURL!)
         let theSession = session()
         let task = theSession.dataTask(with: theURLRequest, completionHandler: {(data, response, error) in
-//        print(response)
         });
         task.resume()
         
