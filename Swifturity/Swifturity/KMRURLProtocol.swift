@@ -8,9 +8,10 @@
 
 import UIKit
 
-class KMRURLProtocol: NSURLProtocol {
-    func canInitWithRequest(inRequest: NSURLRequest) -> Bool {
-        print("Requesting: \(inRequest.URL?.absoluteString)")
+class KMRURLProtocol: URLProtocol {
+    
+    override class func canInit(with request: URLRequest) -> Bool {
+        print("Requesting URL: \(request.url!.absoluteString)")
         return false
     }
 }
